@@ -130,6 +130,10 @@
                     <i class="fa fa-play mr-2"></i>开始游戏
                 </button>
                 
+                <button id="exit-btn" class="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-8 rounded-full text-lg transition-all duration-300 transform hover:scale-105 mb-6 glow" href ="">
+                    退出游戏
+                </button>
+
                 <div class="flex justify-center gap-4 mb-6">
                     <button id="how-to-play-btn" class="glass-dark text-white hover:bg-white/10 py-2 px-4 rounded-full transition-all duration-300">
                         <i class="fa fa-question-circle mr-1"></i>游戏说明
@@ -249,7 +253,7 @@
                     </button>
                     
                     <button id="quit-btn" class="glass-dark text-white hover:bg-white/10 py-3 px-6 rounded-full transition-all duration-300">
-                        <i class="fa fa-sign-out mr-2"></i>退出游戏
+                        <i class="fa fa-sign-out mr-2"></i>返回主界面
                     </button>
                 </div>
             </div>
@@ -416,7 +420,7 @@
         <div id="level-up-notification" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 glass rounded-xl p-6 shadow-lg z-40 opacity-0 pointer-events-none transition-opacity duration-1000 text-center">
             <h3 class="text-3xl font-bold text-primary text-shadow mb-2">关卡升级!</h3>
             <p id="current-level-text" class="text-2xl text-accent">Level 2</p>
-            <p class="text-sm mt-2 text-gray-700">点击任意位置继续</p>
+            <p class="text-sm mt-2 text-gray-700">请等待…</p>
         </div>
     </div>
 
@@ -685,6 +689,7 @@
                 document.getElementById('resume-btn').addEventListener('click', () => this.resumeGame());
                 document.getElementById('restart-btn').addEventListener('click', () => this.restartGame());
                 document.getElementById('quit-btn').addEventListener('click', () => this.quitGame());
+                document.getElementById('exit-btn').addEventListener('click', () => window.location.href = 'main.html'); 
                 document.getElementById('play-again-btn').addEventListener('click', () => this.restartGame());
                 document.getElementById('back-to-menu-btn').addEventListener('click', () => this.backToMenu());
                 
