@@ -1,11 +1,1835 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>家庭灭蚊大战</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5', // 主色调：深紫色
+                        secondary: '#10B981', // 辅助色：绿色
+                        accent: '#F59E0B', // 强调色：橙色
+                        danger: '#EF4444', // 危险色：红色
+                        light: '#F3F4F6', // 亮色
+                        dark: '#1F2937',  // 暗色
+                        battery: '#60A5FA' // 电池颜色：蓝色
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass {
+                background: rgba(255, 255, 255, 0.25);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.18);
+            }
+            .glass-dark {
+                background: rgba(31, 41, 55, 0.7);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            }
+            .glow {
+                filter: drop-shadow(0 0 8px rgba(79, 70, 229, 0.8));
+            }
+            .glow-accent {
+                filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.8));
+            }
+            .animate-float {
+                animation: float 3s ease-in-out infinite;
+            }
+            @keyframes float {
+                0% { transform: translateY(0px); }
+                50% { transform: translateY(-10px); }
+                100% { transform: translateY(0px); }
+            }
+            .animate-pulse-slow {
+                animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+        }
+    </style>
+    
+    <!-- 额外样式 -->
+    <style>
+        body {
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+        canvas {
+            display: block;
+        }
+        .control-btn {
+            -webkit-tap-highlight-color: transparent;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        @keyframes flash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .flash {
+            animation: flash 0.3s ease-in-out 3;
+        }
+        @keyframes pop-in {
+            0% { transform: scale(0); opacity: 0; }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .pop-in {
+            animation: pop-in 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+    </style>
 </head>
-<body>
-    <h1>Game Page</h1>
+<body class="bg-gradient-to-br from-amber-50 to-blue-50 min-h-screen font-sans">
+    <!-- 游戏容器 -->
+    <div id="game-container" class="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden">
+        <!-- 背景 -->
+        <div class="absolute inset-0 z-0">
+            <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-yellow-100/70 to-blue-50/70"></div>
+            <!-- 阳光效果 -->
+            <div class="absolute top-[-200px] right-[-200px] w-[600px] h-[600px] rounded-full bg-yellow-300/30 blur-3xl animate-pulse-slow"></div>
+            <!-- 装饰元素 - 窗户格 -->
+            <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzPjxwYXR0ZXJuIGlkPSJwYXR0ZXJuIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiIHBhdHRlcm5UcmFuc2Zvcm09InJvdGF0ZSgxOCkiPjxwYXRoIGQ9Ik0gNDAgMEwgLTIwIDYwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmNWY1ZjUiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNwYXR0ZXJuKSIvPjwvc3ZnPg==')] opacity-10"></div>
+        </div>
+        
+        <!-- 游戏画布 -->
+        <canvas id="gameCanvas" class="absolute inset-0 w-full h-full z-10"></canvas>
+        
+        <!-- 开始界面 -->
+        <div id="start-screen" class="absolute inset-0 z-20 flex flex-col items-center justify-center p-4">
+            <div class="glass rounded-3xl p-8 max-w-md w-full mx-auto text-center shadow-xl">
+                <h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold text-primary mb-4 text-shadow animate-float">
+                    <i class="fa fa-bug text-accent mr-2"></i>灭蚊大战
+                </h1>
+                <p class="text-gray-700 mb-8 text-lg">控制你的吸蚊枪，消灭所有蚊子，保卫家园！</p>
+                
+                <button id="start-btn" class="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-8 rounded-full text-lg transition-all duration-300 transform hover:scale-105 mb-6 glow">
+                    <i class="fa fa-play mr-2"></i>开始游戏
+                </button>
+                
+                <div class="flex justify-center gap-4 mb-6">
+                    <button id="how-to-play-btn" class="glass-dark text-white hover:bg-white/10 py-2 px-4 rounded-full transition-all duration-300">
+                        <i class="fa fa-question-circle mr-1"></i>游戏说明
+                    </button>
+                    <button id="achievements-btn" class="glass-dark text-white hover:bg-white/10 py-2 px-4 rounded-full transition-all duration-300">
+                        <i class="fa fa-trophy mr-1"></i>成就
+                    </button>
+                </div>
+                
+                <div class="text-sm text-gray-600/70">
+                    <p><i class="fa fa-keyboard-o mr-1"></i>键盘: 方向键移动, 空格吸收, P键暂停</p>
+                    <p><i class="fa fa-battery-full text-battery mr-1"></i>每吸收5只蚊子消耗1格电池，收集电池补充能量</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 游戏界面UI -->
+        <div id="game-ui" class="absolute inset-0 z-20 pointer-events-none opacity-0 transition-opacity duration-500">
+            <!-- 顶部状态栏 - 整合了暂停按钮，避免重叠 -->
+            <div class="absolute top-4 left-0 right-0 flex flex-wrap justify-between items-center gap-2 px-4">
+                <div class="glass rounded-full px-4 py-2 flex items-center gap-2 shadow-lg pointer-events-auto">
+                    <i class="fa fa-star text-accent text-xl"></i>
+                    <span id="score-display" class="font-bold text-gray-800">0</span>
+                </div>
+                
+                <div class="glass rounded-full px-4 py-2 flex items-center gap-2 shadow-lg pointer-events-auto">
+                    <i class="fa fa-heart text-danger text-xl"></i>
+                    <span id="lives-display" class="font-bold text-gray-800">3</span>
+                </div>
+                
+                <div class="glass rounded-full px-4 py-2 flex items-center gap-2 shadow-lg pointer-events-auto">
+                    <i class="fa fa-signal text-primary text-xl"></i>
+                    <span id="level-display" class="font-bold text-gray-800">1</span>
+                </div>
+                
+                <!-- 蚊子计数器 - 用于调试关卡进度 -->
+                <div class="glass rounded-full px-4 py-2 flex items-center gap-2 shadow-lg pointer-events-auto">
+                    <i class="fa fa-bug text-gray-700 text-xl"></i>
+                    <span id="mosquito-count" class="font-bold text-gray-800">0</span>
+                </div>
+                
+                <!-- 电池状态显示 -->
+                <div class="glass rounded-full px-4 py-2 flex items-center gap-2 shadow-lg pointer-events-auto">
+                    <i class="fa fa-battery-full text-battery text-xl"></i>
+                    <div class="flex gap-1" id="battery-display">
+                        <div class="w-3 h-3 bg-battery rounded-sm"></div>
+                        <div class="w-3 h-3 bg-battery rounded-sm"></div>
+                        <div class="w-3 h-3 bg-battery rounded-sm"></div>
+                        <div class="w-3 h-3 bg-battery rounded-sm"></div>
+                    </div>
+                </div>
+                
+                <!-- 暂停按钮整合到状态栏中，避免与计数器重叠 -->
+                <div class="glass rounded-full px-4 py-2 flex items-center gap-2 shadow-lg pointer-events-auto">
+                    <button id="pause-btn" class="flex items-center justify-center hover:bg-white/30 transition-all rounded-full w-8 h-8">
+                        <i class="fa fa-pause text-gray-800"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 道具状态 -->
+            <div class="absolute top-16 left-0 right-0 flex flex-wrap justify-center gap-4 pointer-events-auto">
+                <div id="powerup-suction" class="glass rounded-full px-3 py-1 flex items-center gap-2 shadow-lg opacity-50">
+                    <i class="fa fa-magnet text-primary"></i>
+                    <span class="text-sm font-medium">强力吸收</span>
+                    <span id="suction-timer" class="text-xs bg-primary/20 rounded-full px-2">0s</span>
+                </div>
+                
+                <div id="powerup-shield" class="glass rounded-full px-3 py-1 flex items-center gap-2 shadow-lg opacity-50">
+                    <i class="fa fa-shield text-accent"></i>
+                    <span class="text-sm font-medium">能量护盾</span>
+                </div>
+            </div>
+            
+            <!-- 移动设备控制器 -->
+            <div class="fixed bottom-6 left-0 right-0 flex justify-between px-6 md:hidden pointer-events-auto">
+                <!-- 方向控制 -->
+                <div class="grid grid-cols-3 gap-2 w-32 h-32">
+                    <div></div>
+                    <button id="btn-up" class="control-btn glass rounded-full flex items-center justify-center text-xl">
+                        <i class="fa fa-chevron-up"></i>
+                    </button>
+                    <div></div>
+                    <button id="btn-left" class="control-btn glass rounded-full flex items-center justify-center text-xl">
+                        <i class="fa fa-chevron-left"></i>
+                    </button>
+                    <div></div>
+                    <button id="btn-right" class="control-btn glass rounded-full flex items-center justify-center text-xl">
+                        <i class="fa fa-chevron-right"></i>
+                    </button>
+                    <div></div>
+                    <button id="btn-down" class="control-btn glass rounded-full flex items-center justify-center text-xl">
+                        <i class="fa fa-chevron-down"></i>
+                    </button>
+                    <div></div>
+                </div>
+                
+                <!-- 吸收按钮 -->
+                <button id="btn-suck" class="control-btn glass w-20 h-20 rounded-full flex items-center justify-center text-2xl bg-primary/30">
+                    <i class="fa fa-plus"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 暂停界面 -->
+        <div id="pause-screen" class="absolute inset-0 z-30 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+            <div class="glass rounded-3xl p-8 max-w-md w-full mx-auto text-center shadow-xl pop-in">
+                <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-primary mb-6 text-shadow">游戏暂停</h2>
+                
+                <div class="flex flex-col gap-4 mb-6">
+                    <button id="resume-btn" class="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105 glow">
+                        <i class="fa fa-play mr-2"></i>继续游戏
+                    </button>
+                    
+                    <button id="restart-btn" class="glass-dark text-white hover:bg-white/10 py-3 px-6 rounded-full transition-all duration-300">
+                        <i class="fa fa-refresh mr-2"></i>重新开始
+                    </button>
+                    
+                    <button id="quit-btn" class="glass-dark text-white hover:bg-white/10 py-3 px-6 rounded-full transition-all duration-300">
+                        <i class="fa fa-sign-out mr-2"></i>退出游戏
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 游戏结束界面 -->
+        <div id="game-over-screen" class="absolute inset-0 z-30 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+            <div class="glass rounded-3xl p-8 max-w-md w-full mx-auto text-center shadow-xl pop-in">
+                <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-danger mb-2 text-shadow">游戏结束</h2>
+                <p class="text-xl text-gray-700 mb-6">你的家园被蚊子占领了</p>
+                
+                <div class="space-y-3 mb-8">
+                    <div class="glass-dark text-white p-3 rounded-xl">
+                        <p>最终得分: <span id="final-score" class="font-bold">0</span></p>
+                    </div>
+                    <div class="glass-dark text-white p-3 rounded-xl">
+                        <p>达到关卡: <span id="final-level" class="font-bold">1</span></p>
+                    </div>
+                    <div class="glass-dark text-white p-3 rounded-xl">
+                        <p>消灭蚊子: <span id="final-mosquitoes" class="font-bold">0</span></p>
+                    </div>
+                    <div class="glass-dark text-white p-3 rounded-xl">
+                        <p>新解锁成就: <span id="new-achievements" class="font-bold">0</span></p>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <button id="play-again-btn" class="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105 glow">
+                        <i class="fa fa-refresh mr-2"></i>再玩一次
+                    </button>
+                    
+                    <button id="back-to-menu-btn" class="glass-dark text-white hover:bg-white/10 py-3 px-6 rounded-full transition-all duration-300">
+                        <i class="fa fa-home mr-2"></i>返回菜单
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 游戏说明界面 -->
+        <div id="instructions-screen" class="absolute inset-0 z-30 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+            <div class="glass rounded-3xl p-6 max-w-md w-full mx-auto shadow-xl max-h-[80vh] overflow-y-auto pop-in">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-primary text-shadow">游戏说明</h2>
+                    <button id="close-instructions-btn" class="text-gray-600 hover:text-gray-800">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-4 text-gray-700">
+                    <div>
+                        <h3 class="font-bold text-primary mb-1">基本操作</h3>
+                        <p>控制吸蚊枪移动，吸收飞来的蚊子获得分数</p>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-bold text-primary mb-1">电池系统</h3>
+                        <p>吸蚊枪初始有4格满电，每吸收5只蚊子消耗1格电池</p>
+                        <p>收集电池道具可以补充2格电池</p>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-bold text-primary mb-1">蚊子类型</h3>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li>小蚊子: 移动快，分数低</li>
+                            <li>中蚊子: 移动中等，分数中等</li>
+                            <li>大蚊子: 移动慢，分数高，被撞击伤害大</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-bold text-primary mb-1">道具说明</h3>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li><i class="fa fa-magnet text-primary"></i> 强力吸收: 扩大吸收范围，持续10秒</li>
+                            <li><i class="fa fa-shield text-accent"></i> 能量护盾: 抵挡一次撞击伤害</li>
+                            <li><i class="fa fa-battery-three-quarters text-battery"></i> 电池: 补充2格电池能量</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-bold text-primary mb-1">关卡说明</h3>
+                        <p>每吸收10只蚊子即可升级到下一个关卡</p>
+                        <p>关卡越高，蚊子出现速度越快，数量越多</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 成就界面 -->
+        <div id="achievements-screen" class="absolute inset-0 z-30 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+            <div class="glass rounded-3xl p-6 max-w-md w-full mx-auto shadow-xl max-h-[80vh] overflow-y-auto pop-in">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-primary text-shadow">成就列表</h2>
+                    <button id="close-achievements-btn" class="text-gray-600 hover:text-gray-800">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div id="achievements-list" class="space-y-3">
+                    <!-- 成就将通过JS动态添加 -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- 侧边栏 - 大屏幕 -->
+        <div id="sidebar" class="hidden lg:block absolute left-4 top-1/2 -translate-y-1/2 z-20 glass rounded-2xl p-4 max-w-[250px] shadow-lg pointer-events-auto">
+            <h3 class="font-bold text-primary text-center mb-4">操作指南</h3>
+            
+            <div class="space-y-4 text-gray-700 text-sm">
+                <div>
+                    <p class="font-medium mb-1">移动控制</p>
+                    <div class="flex justify-center gap-2 my-1">
+                        <div></div>
+                        <button class="glass-dark text-white w-8 h-8 rounded-full flex items-center justify-center text-xs">↑</button>
+                        <div></div>
+                    </div>
+                    <div class="flex justify-center gap-2 my-1">
+                        <button class="glass-dark text-white w-8 h-8 rounded-full flex items-center justify-center text-xs">←</button>
+                        <button class="glass-dark text-white w-8 h-8 rounded-full flex items-center justify-center text-xs">↓</button>
+                        <button class="glass-dark text-white w-8 h-8 rounded-full flex items-center justify-center text-xs">→</button>
+                    </div>
+                </div>
+                
+                <div>
+                    <p class="font-medium mb-1">吸收蚊子</p>
+                    <p class="flex items-center"><kbd class="glass-dark text-white px-2 py-1 rounded text-xs mr-2">空格</kbd> 启动吸收</p>
+                    <p class="text-xs text-gray-500">注意：每吸收5只蚊子消耗1格电池</p>
+                </div>
+                
+                <div>
+                    <p class="font-medium mb-1">游戏控制</p>
+                    <p class="flex items-center"><kbd class="glass-dark text-white px-2 py-1 rounded text-xs mr-2">P</kbd> 暂停游戏</p>
+                </div>
+                
+                <div class="pt-2 border-t border-white/30">
+                    <h4 class="font-medium mb-2">道具说明</h4>
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fa fa-magnet text-primary"></i>
+                        <span>扩大吸收范围</span>
+                    </div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fa fa-shield text-accent"></i>
+                        <span>抵挡一次伤害</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fa fa-battery-three-quarters text-battery"></i>
+                        <span>补充2格电池能量</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 成就解锁提示 -->
+        <div id="achievement-notification" class="fixed top-4 right-4 glass rounded-xl p-4 shadow-lg max-w-[300px] z-40 transform translate-x-full transition-transform duration-500 flex items-start gap-3">
+            <div class="text-accent text-2xl mt-1">
+                <i class="fa fa-trophy"></i>
+            </div>
+            <div>
+                <h4 id="achievement-title" class="font-bold text-gray-800">成就解锁!</h4>
+                <p id="achievement-description" class="text-sm text-gray-700">你解锁了一个新成就</p>
+            </div>
+        </div>
+        
+        <!-- 关卡升级提示 -->
+        <div id="level-up-notification" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 glass rounded-xl p-6 shadow-lg z-40 opacity-0 pointer-events-none transition-opacity duration-1000 text-center">
+            <h3 class="text-3xl font-bold text-primary text-shadow mb-2">关卡升级!</h3>
+            <p id="current-level-text" class="text-2xl text-accent">Level 2</p>
+            <p class="text-sm mt-2 text-gray-700">点击任意位置继续</p>
+        </div>
+    </div>
+
+    <script>
+        // 游戏主类
+        class MosquitoGame {
+            constructor() {
+                // 获取画布和上下文
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                
+                // 设置画布尺寸
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+                
+                // 游戏状态
+                this.gameState = 'start'; // start, playing, paused, gameOver, levelingUp
+                this.isLevelingUp = false; // 标记是否正在升级关卡
+                
+                // 玩家属性
+                this.player = {
+                    x: this.canvas.width / 2,
+                    y: this.canvas.height / 2,
+                    width: 50,
+                    height: 60,
+                    speed: 5,
+                    lives: 3,
+                    invincible: false,
+                    invincibleTimer: 0,
+                    color: '#374151',
+                    hasShield: false,
+                    // 电池属性 - 初始满电
+                    battery: 4, // 4格电池
+                    maxBattery: 4
+                };
+                
+                // 吸收范围
+                this.suction = {
+                    active: false,
+                    radius: 60,
+                    powerup: false,
+                    powerupTimer: 0,
+                    maxPowerupTime: 10000, // 10秒（以毫秒为单位）
+                };
+                
+                // 跟踪吸收蚊子数量，用于计算电池消耗
+                this.mosquitoesSinceLastBatteryUse = 0;
+                this.mosquitoesPerBattery = 5; // 每吸收5只蚊子消耗1格电池
+                
+                // 蚊子数组
+                this.mosquitoes = [];
+                
+                // 道具数组
+                this.powerups = [];
+                
+                // 粒子效果数组
+                this.particles = [];
+                
+                // 游戏统计
+                this.score = 0;
+                this.level = 1;
+                this.mosquitoesAbsorbed = 0;
+                this.mosquitoesEscaped = 0;
+                this.lastLevel = 1; // 记录上一个关卡，用于判断是否需要升级
+                
+                // 游戏设置
+                this.spawnRate = 1500; // 蚊子生成间隔（毫秒）
+                this.lastSpawnTime = 0;
+                this.maxMosquitoes = 8;
+                
+                // 成就系统
+                this.achievements = [
+                    { id: 'first_blood', title: '第一滴血', description: '吸收第一只蚊子', unlocked: false },
+                    { id: 'survivor', title: '生存者', description: '达到第5关', unlocked: false },
+                    { id: 'collector', title: '收集者', description: '吸收100只蚊子', unlocked: false },
+                    { id: 'shield_master', title: '护盾大师', description: '使用10次能量护盾', unlocked: false },
+                    { id: 'suction_expert', title: '吸收专家', description: '使用5次强力吸收', unlocked: false },
+                    { id: 'high_score', title: '高分达人', description: '获得1000分', unlocked: false },
+                    { id: 'dodger', title: '闪避大师', description: '让50只蚊子逃脱', unlocked: false },
+                    { id: 'energy_efficient', title: '节能大师', description: '在不收集电池的情况下坚持3分钟', unlocked: false },
+                    { id: 'battery_collector', title: '电池收集者', description: '收集20个电池道具', unlocked: false }
+                ];
+                this.shieldUses = 0;
+                this.suctionUses = 0;
+                this.batteriesCollected = 0; // 电池收集数量
+                this.newAchievements = 0;
+                this.gameStartTime = 0; // 用于计算游戏时长
+                
+                // 按键状态
+                this.keys = {
+                    up: false,
+                    down: false,
+                    left: false,
+                    right: false,
+                    space: false,
+                    p: false
+                };
+                
+                // 绑定事件监听
+                this.bindEvents();
+                
+                // 初始化界面
+                this.initUI();
+                
+                // 游戏循环变量
+                this.lastTime = 0;
+                this.animationId = null;
+                
+                // 启动游戏循环
+                this.gameLoop();
+            }
+            
+            // 调整画布尺寸
+            resizeCanvas() {
+                // 保持16:9的比例，适应屏幕
+                const windowWidth = window.innerWidth;
+                const windowHeight = window.innerHeight;
+                const ratio = 16 / 9;
+                
+                let newWidth, newHeight;
+                
+                if (windowWidth / windowHeight > ratio) {
+                    newHeight = windowHeight;
+                    newWidth = newHeight * ratio;
+                } else {
+                    newWidth = windowWidth;
+                    newHeight = newWidth / ratio;
+                }
+                
+                this.canvas.width = newWidth;
+                this.canvas.height = newHeight;
+                
+                // 重新定位玩家到中心
+                if (this.gameState === 'playing') {
+                    this.player.x = this.canvas.width / 2;
+                    this.player.y = this.canvas.height / 2;
+                }
+            }
+            
+            // 绑定事件监听
+            bindEvents() {
+                // 键盘事件
+                window.addEventListener('keydown', (e) => {
+                    // 防止空格键触发页面滚动
+                    if (e.key === ' ' && this.gameState === 'playing') {
+                        e.preventDefault();
+                    }
+                    
+                    switch(e.key) {
+                        case 'ArrowUp':
+                            this.keys.up = true;
+                            break;
+                        case 'ArrowDown':
+                            this.keys.down = true;
+                            break;
+                        case 'ArrowLeft':
+                            this.keys.left = true;
+                            break;
+                        case 'ArrowRight':
+                            this.keys.right = true;
+                            break;
+                        case ' ':
+                            // 只有有电池才能激活吸收
+                            if (this.player.battery > 0) {
+                                this.keys.space = true;
+                                this.suction.active = true;
+                            }
+                            break;
+                        case 'p':
+                        case 'P':
+                            if (!this.keys.p) {
+                                this.keys.p = true;
+                                if (this.gameState === 'playing') {
+                                    this.pauseGame();
+                                } else if (this.gameState === 'paused') {
+                                    this.resumeGame();
+                                }
+                            }
+                            break;
+                    }
+                });
+                
+                window.addEventListener('keyup', (e) => {
+                    switch(e.key) {
+                        case 'ArrowUp':
+                            this.keys.up = false;
+                            break;
+                        case 'ArrowDown':
+                            this.keys.down = false;
+                            break;
+                        case 'ArrowLeft':
+                            this.keys.left = false;
+                            break;
+                        case 'ArrowRight':
+                            this.keys.right = false;
+                            break;
+                        case ' ':
+                            this.keys.space = false;
+                            this.suction.active = false;
+                            break;
+                        case 'p':
+                        case 'P':
+                            this.keys.p = false;
+                            break;
+                    }
+                });
+                
+                // 触摸控制
+                document.getElementById('btn-up').addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.keys.up = true;
+                });
+                document.getElementById('btn-up').addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    this.keys.up = false;
+                });
+                
+                document.getElementById('btn-down').addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.keys.down = true;
+                });
+                document.getElementById('btn-down').addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    this.keys.down = false;
+                });
+                
+                document.getElementById('btn-left').addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.keys.left = true;
+                });
+                document.getElementById('btn-left').addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    this.keys.left = false;
+                });
+                
+                document.getElementById('btn-right').addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.keys.right = true;
+                });
+                document.getElementById('btn-right').addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    this.keys.right = false;
+                });
+                
+                document.getElementById('btn-suck').addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    // 只有有电池才能激活吸收
+                    if (this.player.battery > 0) {
+                        this.keys.space = true;
+                        this.suction.active = true;
+                    }
+                });
+                document.getElementById('btn-suck').addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    this.keys.space = false;
+                    this.suction.active = false;
+                });
+                
+                // 按钮事件 - 使用箭头函数确保this指向正确
+                document.getElementById('start-btn').addEventListener('click', () => this.startGame());
+                document.getElementById('how-to-play-btn').addEventListener('click', () => this.showInstructions());
+                document.getElementById('achievements-btn').addEventListener('click', () => this.showAchievements());
+                document.getElementById('close-instructions-btn').addEventListener('click', () => this.hideInstructions());
+                document.getElementById('close-achievements-btn').addEventListener('click', () => this.hideAchievements());
+                document.getElementById('pause-btn').addEventListener('click', () => this.pauseGame());
+                document.getElementById('resume-btn').addEventListener('click', () => this.resumeGame());
+                document.getElementById('restart-btn').addEventListener('click', () => this.restartGame());
+                document.getElementById('quit-btn').addEventListener('click', () => this.quitGame());
+                document.getElementById('play-again-btn').addEventListener('click', () => this.restartGame());
+                document.getElementById('back-to-menu-btn').addEventListener('click', () => this.backToMenu());
+                
+                // 关卡升级提示点击跳过
+                document.getElementById('level-up-notification').addEventListener('click', () => {
+                    if (this.isLevelingUp) {
+                        this.completeLevelUp();
+                    }
+                });
+            }
+            
+            // 初始化UI
+            initUI() {
+                this.updateScore();
+                this.updateLives();
+                this.updateLevel();
+                this.updateBatteryDisplay();
+                this.updateMosquitoCount();
+                this.renderAchievementsList();
+            }
+            
+            // 更新分数显示
+            updateScore() {
+                document.getElementById('score-display').textContent = this.score;
+                document.getElementById('final-score').textContent = this.score;
+            }
+            
+            // 更新生命值显示
+            updateLives() {
+                document.getElementById('lives-display').textContent = this.player.lives;
+            }
+            
+            // 更新关卡显示
+            updateLevel() {
+                document.getElementById('level-display').textContent = this.level;
+                document.getElementById('final-level').textContent = this.level;
+                document.getElementById('current-level-text').textContent = `Level ${this.level}`;
+            }
+            
+            // 更新电池显示
+            updateBatteryDisplay() {
+                const batteryDisplay = document.getElementById('battery-display');
+                batteryDisplay.innerHTML = '';
+                
+                for (let i = 0; i < this.player.maxBattery; i++) {
+                    const batteryCell = document.createElement('div');
+                    batteryCell.className = `w-3 h-3 rounded-sm ${i < this.player.battery ? 'bg-battery' : 'bg-gray-300'}`;
+                    
+                    // 电池快耗尽时添加闪烁效果
+                    if (this.player.battery <= 1 && i < this.player.battery) {
+                        batteryCell.classList.add('animate-pulse');
+                    }
+                    
+                    batteryDisplay.appendChild(batteryCell);
+                }
+            }
+            
+            // 更新蚊子数量显示（用于调试关卡进度）
+            updateMosquitoCount() {
+                document.getElementById('mosquito-count').textContent = this.mosquitoesAbsorbed;
+                document.getElementById('final-mosquitoes').textContent = this.mosquitoesAbsorbed;
+            }
+            
+            // 渲染成就列表
+            renderAchievementsList() {
+                const listContainer = document.getElementById('achievements-list');
+                listContainer.innerHTML = '';
+                
+                this.achievements.forEach(achievement => {
+                    const achievementElement = document.createElement('div');
+                    achievementElement.className = `glass rounded-xl p-3 flex items-start gap-3 ${achievement.unlocked ? '' : 'opacity-50'}`;
+                    
+                    const iconClass = achievement.unlocked ? 
+                        'text-accent text-xl mt-0.5' : 
+                        'text-gray-400 text-xl mt-0.5';
+                    
+                    achievementElement.innerHTML = `
+                        <div class="${iconClass}">
+                            <i class="fa fa-trophy"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-800 ${!achievement.unlocked ? 'line-through' : ''}">${achievement.title}</h4>
+                            <p class="text-sm text-gray-600">${achievement.description}</p>
+                        </div>
+                    `;
+                    
+                    listContainer.appendChild(achievementElement);
+                });
+                
+                document.getElementById('new-achievements').textContent = this.newAchievements;
+            }
+            
+            // 显示成就解锁通知
+            showAchievementNotification(achievement) {
+                const notification = document.getElementById('achievement-notification');
+                document.getElementById('achievement-title').textContent = `解锁成就: ${achievement.title}`;
+                document.getElementById('achievement-description').textContent = achievement.description;
+                
+                notification.style.transform = 'translateX(0)';
+                
+                setTimeout(() => {
+                    notification.style.transform = 'translateX(calc(100% + 20px))';
+                }, 3000);
+            }
+            
+            // 检查成就解锁
+            checkAchievements() {
+                // 第一滴血
+                if (this.mosquitoesAbsorbed >= 1 && !this.achievements[0].unlocked) {
+                    this.achievements[0].unlocked = true;
+                    this.newAchievements++;
+                    this.showAchievementNotification(this.achievements[0]);
+                }
+                
+                // 生存者
+                if (this.level >= 5 && !this.achievements[1].unlocked) {
+                    this.achievements[1].unlocked = true;
+                    this.newAchievements++;
+                    this.showAchievementNotification(this.achievements[1]);
+                }
+                
+                // 收集者
+                if (this.mosquitoesAbsorbed >= 100 && !this.achievements[2].unlocked) {
+                    this.achievements[2].unlocked = true;
+                    this.newAchievements++;
+                    this.showAchievementNotification(this.achievements[2]);
+                }
+                
+                // 护盾大师
+                if (this.shieldUses >= 10 && !this.achievements[3].unlocked) {
+                    this.achievements[3].unlocked = true;
+                    this.newAchievements++;
+                    this.showAchievementNotification(this.achievements[3]);
+                }
+                
+                // 吸收专家
+                if (this.suctionUses >= 5 && !this.achievements[4].unlocked) {
+                    this.achievements[4].unlocked = true;
+                    this.newAchievements++;
+                    this.showAchievementNotification(this.achievements[4]);
+                }
+                
+                // 高分达人
+                if (this.score >= 1000 && !this.achievements[5].unlocked) {
+                    this.achievements[5].unlocked = true;
+                    this.newAchievements++;
+                    this.showAchievementNotification(this.achievements[5]);
+                }
+                
+                // 闪避大师
+                if (this.mosquitoesEscaped >= 50 && !this.achievements[6].unlocked) {
+                    this.achievements[6].unlocked = true;
+                    this.newAchievements++;
+                    this.showAchievementNotification(this.achievements[6]);
+                }
+                
+                // 节能大师（3分钟不收集电池）
+                if (this.gameState === 'playing' && this.batteriesCollected === 0 && 
+                    Date.now() - this.gameStartTime >= 180000 && !this.achievements[7].unlocked) {
+                    this.achievements[7].unlocked = true;
+                    this.newAchievements++;
+                    this.showAchievementNotification(this.achievements[7]);
+                }
+                
+                // 电池收集者
+                if (this.batteriesCollected >= 20 && !this.achievements[8].unlocked) {
+                    this.achievements[8].unlocked = true;
+                    this.newAchievements++;
+                    this.showAchievementNotification(this.achievements[8]);
+                }
+                
+                // 更新成就列表显示
+                this.renderAchievementsList();
+            }
+            
+            // 显示关卡升级提示
+            showLevelUpNotification() {
+                const notification = document.getElementById('level-up-notification');
+                notification.style.opacity = '1';
+                notification.style.pointerEvents = 'auto';
+                
+                // 确保不会重复设置超时
+                if (this.levelUpTimeout) {
+                    clearTimeout(this.levelUpTimeout);
+                }
+                
+                // 2秒后自动结束升级状态，或允许用户点击跳过
+                this.levelUpTimeout = setTimeout(() => {
+                    this.completeLevelUp();
+                }, 2000);
+            }
+            
+            // 完成关卡升级
+            completeLevelUp() {
+                if (!this.isLevelingUp) return;
+                
+                const notification = document.getElementById('level-up-notification');
+                notification.style.opacity = '0';
+                notification.style.pointerEvents = 'none';
+                
+                // 重置升级状态
+                this.isLevelingUp = false;
+                
+                // 触发新关卡的蚊子生成
+                this.lastSpawnTime = performance.now() - this.spawnRate + 500; // 500ms后生成新蚊子
+                
+                // 确保关卡计数器正确更新
+                this.updateLevel();
+            }
+            
+            // 生成蚊子
+            spawnMosquito(timestamp) {
+                // 关卡升级过程中不生成新蚊子
+                if (this.isLevelingUp) return;
+                
+                if (timestamp - this.lastSpawnTime > this.spawnRate && 
+                    this.mosquitoes.length < this.maxMosquitoes) {
+                    
+                    // 随机选择蚊子类型
+                    const type = Math.random();
+                    let size, speed, score;
+                    
+                    if (type < 0.5) { // 小蚊子 (50% 概率)
+                        size = 10;
+                        speed = 2 + this.level * 0.3;
+                        score = 10;
+                    } else if (type < 0.85) { // 中蚊子 (35% 概率)
+                        size = 15;
+                        speed = 1.5 + this.level * 0.2;
+                        score = 20;
+                    } else { // 大蚊子 (15% 概率)
+                        size = 20;
+                        speed = 1 + this.level * 0.15;
+                        score = 30;
+                    }
+                    
+                    // 随机选择边缘位置
+                    const side = Math.floor(Math.random() * 4);
+                    let x, y, vx, vy;
+                    
+                    switch(side) {
+                        case 0: // 顶部
+                            x = Math.random() * this.canvas.width;
+                            y = -size;
+                            vx = (Math.random() - 0.5) * 2;
+                            vy = speed;
+                            break;
+                        case 1: // 右侧
+                            x = this.canvas.width + size;
+                            y = Math.random() * this.canvas.height;
+                            vx = -speed;
+                            vy = (Math.random() - 0.5) * 2;
+                            break;
+                        case 2: // 底部
+                            x = Math.random() * this.canvas.width;
+                            y = this.canvas.height + size;
+                            vx = (Math.random() - 0.5) * 2;
+                            vy = -speed;
+                            break;
+                        case 3: // 左侧
+                            x = -size;
+                            y = Math.random() * this.canvas.height;
+                            vx = speed;
+                            vy = (Math.random() - 0.5) * 2;
+                            break;
+                    }
+                    
+                    // 添加蚊子到数组
+                    this.mosquitoes.push({
+                        x, y, size, speed, score, 
+                        vx, vy,
+                        rotation: 0,
+                        rotationSpeed: (Math.random() - 0.5) * 0.1,
+                        wingPhase: Math.random() * Math.PI * 2 // 翅膀动画相位
+                    });
+                    
+                    this.lastSpawnTime = timestamp;
+                }
+            }
+            
+            // 生成道具
+            spawnPowerup(timestamp) {
+                // 关卡升级过程中不生成新道具
+                if (this.isLevelingUp) return;
+                
+                // 每20秒有机会生成一个道具
+                if (timestamp % 20000 < 100 && Math.random() < 0.8) {
+                    // 三种道具：强力吸收(30%)、护盾(30%)、电池(40%)
+                    let type;
+                    const rand = Math.random();
+                    if (rand < 0.3) {
+                        type = 'suction';
+                    } else if (rand < 0.6) {
+                        type = 'shield';
+                    } else {
+                        type = 'battery'; // 电池道具
+                    }
+                    
+                    const x = Math.random() * (this.canvas.width - 40) + 20;
+                    const y = Math.random() * (this.canvas.height - 40) + 20;
+                    
+                    this.powerups.push({
+                        x, y, size: 20, type,
+                        timeSpawned: timestamp,
+                        lifetime: 10000 // 10秒后消失
+                    });
+                }
+            }
+            
+            // 创建粒子效果
+            createParticles(x, y, count, color) {
+                // 限制粒子数量，防止性能问题
+                if (this.particles.length > 500) {
+                    this.particles.splice(0, 100); // 移除最早的100个粒子
+                }
+                
+                for (let i = 0; i < count; i++) {
+                    this.particles.push({
+                        x, y,
+                        size: Math.random() * 4 + 1,
+                        color,
+                        vx: (Math.random() - 0.5) * 6,
+                        vy: (Math.random() - 0.5) * 6,
+                        alpha: 1,
+                        decay: 0.03 + Math.random() * 0.02
+                    });
+                }
+            }
+            
+            // 更新游戏状态
+            update(timestamp, deltaTime) {
+                if (this.gameState !== 'playing') return;
+                
+                // 关卡升级过程中，玩家仍可移动，但不与蚊子交互
+                if (this.isLevelingUp) {
+                    // 允许玩家移动
+                    if (this.keys.up && this.player.y > this.player.height / 2) {
+                        this.player.y -= this.player.speed;
+                    }
+                    if (this.keys.down && this.player.y < this.canvas.height - this.player.height / 2) {
+                        this.player.y += this.player.speed;
+                    }
+                    if (this.keys.left && this.player.x > this.player.width / 2) {
+                        this.player.x -= this.player.speed;
+                    }
+                    if (this.keys.right && this.player.x < this.canvas.width - this.player.width / 2) {
+                        this.player.x += this.player.speed;
+                    }
+                    
+                    // 更新粒子效果
+                    this.updateParticles();
+                    return;
+                }
+                
+                // 计算时间差（秒）
+                const delta = deltaTime / 1000;
+                
+                // 更新玩家位置
+                if (this.keys.up && this.player.y > this.player.height / 2) {
+                    this.player.y -= this.player.speed;
+                }
+                if (this.keys.down && this.player.y < this.canvas.height - this.player.height / 2) {
+                    this.player.y += this.player.speed;
+                }
+                if (this.keys.left && this.player.x > this.player.width / 2) {
+                    this.player.x -= this.player.speed;
+                }
+                if (this.keys.right && this.player.x < this.canvas.width - this.player.width / 2) {
+                    this.player.x += this.player.speed;
+                }
+                
+                // 处理无敌状态
+                if (this.player.invincible) {
+                    this.player.invincibleTimer += deltaTime;
+                    if (this.player.invincibleTimer > 2000) { // 2秒无敌时间
+                        this.player.invincible = false;
+                        this.player.invincibleTimer = 0;
+                    }
+                }
+                
+                // 处理强力吸收道具
+                if (this.suction.powerup) {
+                    this.suction.powerupTimer += deltaTime;
+                    const remainingTime = Math.ceil((this.suction.maxPowerupTime - this.suction.powerupTimer) / 1000);
+                    document.getElementById('suction-timer').textContent = `${remainingTime}s`;
+                    
+                    if (this.suction.powerupTimer > this.suction.maxPowerupTime) {
+                        this.suction.powerup = false;
+                        this.suction.powerupTimer = 0;
+                        document.getElementById('suction-timer').textContent = '0s';
+                        document.getElementById('powerup-suction').classList.add('opacity-50');
+                    }
+                }
+                
+                // 生成蚊子和道具
+                this.spawnMosquito(timestamp);
+                this.spawnPowerup(timestamp);
+                
+                // 更新蚊子位置和翅膀动画
+                for (let i = this.mosquitoes.length - 1; i >= 0; i--) {
+                    const mosquito = this.mosquitoes[i];
+                    
+                    // 更新位置
+                    mosquito.x += mosquito.vx;
+                    mosquito.y += mosquito.vy;
+                    mosquito.rotation += mosquito.rotationSpeed;
+                    mosquito.wingPhase += 0.15; // 更新翅膀动画相位
+                    
+                    // 检查是否飞出屏幕（逃脱）
+                    if (mosquito.x < -mosquito.size * 2 || 
+                        mosquito.x > this.canvas.width + mosquito.size * 2 || 
+                        mosquito.y < -mosquito.size * 2 || 
+                        mosquito.y > this.canvas.height + mosquito.size * 2) {
+                        
+                        // 蚊子逃脱，扣分
+                        this.score = Math.max(0, this.score - 5);
+                        this.updateScore();
+                        this.mosquitoesEscaped++;
+                        
+                        // 创建逃脱粒子效果
+                        this.createParticles(mosquito.x, mosquito.y, 5, '#9CA3AF');
+                        
+                        // 移除蚊子
+                        this.mosquitoes.splice(i, 1);
+                        
+                        // 检查成就
+                        this.checkAchievements();
+                        continue;
+                    }
+                    
+                    // 检查是否被吸收
+                    if (this.suction.active) {
+                        const effectiveRadius = this.suction.powerup ? 
+                            this.suction.radius * 2 : this.suction.radius;
+                        
+                        const dx = mosquito.x - this.player.x;
+                        const dy = mosquito.y - this.player.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        // 如果在吸收范围内，被吸引
+                        if (distance < effectiveRadius) {
+                            // 计算吸引力
+                            const force = (1 - distance / effectiveRadius) * 0.5 * deltaTime;
+                            const angle = Math.atan2(dy, dx);
+                            
+                            mosquito.x -= Math.cos(angle) * force;
+                            mosquito.y -= Math.sin(angle) * force;
+                            
+                            // 如果足够近，吸收蚊子
+                            if (distance < this.player.width / 3 + mosquito.size) {
+                                // 增加分数
+                                this.score += mosquito.score;
+                                this.updateScore();
+                                this.mosquitoesAbsorbed++;
+                                this.updateMosquitoCount();
+                                
+                                // 创建吸收粒子效果
+                                this.createParticles(this.player.x, this.player.y, 8, '#555555');
+                                
+                                // 移除蚊子
+                                this.mosquitoes.splice(i, 1);
+                                
+                                // 跟踪吸收的蚊子数量，计算电池消耗
+                                this.mosquitoesSinceLastBatteryUse++;
+                                if (this.mosquitoesSinceLastBatteryUse >= this.mosquitoesPerBattery) {
+                                    // 消耗一格电池
+                                    this.player.battery = Math.max(0, this.player.battery - 1);
+                                    this.updateBatteryDisplay();
+                                    this.mosquitoesSinceLastBatteryUse = 0;
+                                    
+                                    // 电池耗尽时自动关闭吸收
+                                    if (this.player.battery <= 0) {
+                                        this.suction.active = false;
+                                        this.keys.space = false;
+                                        
+                                        // 电池耗尽闪烁效果
+                                        this.canvas.classList.add('flash');
+                                        setTimeout(() => {
+                                            this.canvas.classList.remove('flash');
+                                        }, 300);
+                                    }
+                                }
+                                
+                                // 检查成就
+                                this.checkAchievements();
+                                
+                                // 检查关卡升级 - 每次吸收蚊子后都检查
+                                this.checkLevelUp();
+                            }
+                        }
+                    } else {
+                        // 检查碰撞（未激活吸收时）
+                        const dx = mosquito.x - this.player.x;
+                        const dy = mosquito.y - this.player.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < this.player.width / 3 + mosquito.size && !this.player.invincible) {
+                            // 处理碰撞
+                            if (this.player.hasShield) {
+                                // 使用护盾
+                                this.player.hasShield = false;
+                                this.shieldUses++;
+                                document.getElementById('powerup-shield').classList.add('opacity-50');
+                                
+                                // 创建护盾碰撞效果
+                                this.createParticles(this.player.x, this.player.y, 15, '#F59E0B');
+                                
+                                // 检查成就
+                                this.checkAchievements();
+                            } else {
+                                // 扣除生命值
+                                this.player.lives--;
+                                this.updateLives();
+                                this.player.invincible = true;
+                                
+                                // 屏幕震动效果
+                                this.canvas.classList.add('shake');
+                                setTimeout(() => {
+                                    this.canvas.classList.remove('shake');
+                                }, 500);
+                                
+                                // 创建受伤粒子效果
+                                this.createParticles(this.player.x, this.player.y, 10, '#EF4444');
+                                
+                                // 检查游戏结束
+                                if (this.player.lives <= 0) {
+                                    this.gameOver();
+                                    return;
+                                }
+                            }
+                            
+                            // 移除蚊子
+                            this.mosquitoes.splice(i, 1);
+                        }
+                    }
+                }
+                
+                // 更新道具
+                for (let i = this.powerups.length - 1; i >= 0; i--) {
+                    const powerup = this.powerups[i];
+                    
+                    // 检查是否过期
+                    if (timestamp - powerup.timeSpawned > powerup.lifetime) {
+                        this.powerups.splice(i, 1);
+                        continue;
+                    }
+                    
+                    // 检查是否被玩家拾取
+                    const dx = powerup.x - this.player.x;
+                    const dy = powerup.y - this.player.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < this.player.width / 2 + powerup.size) {
+                        // 应用道具效果
+                        if (powerup.type === 'suction') {
+                            this.suction.powerup = true;
+                            this.suction.powerupTimer = 0;
+                            this.suctionUses++;
+                            document.getElementById('powerup-suction').classList.remove('opacity-50');
+                            
+                            // 创建道具效果
+                            this.createParticles(this.player.x, this.player.y, 12, '#4F46E5');
+                        } else if (powerup.type === 'shield') {
+                            this.player.hasShield = true;
+                            document.getElementById('powerup-shield').classList.remove('opacity-50');
+                            
+                            // 创建道具效果
+                            this.createParticles(this.player.x, this.player.y, 12, '#F59E0B');
+                        } else if (powerup.type === 'battery') { // 电池道具
+                            // 增加2格电池，不超过最大值
+                            this.player.battery = Math.min(
+                                this.player.maxBattery, 
+                                this.player.battery + 2
+                            );
+                            this.batteriesCollected++;
+                            this.updateBatteryDisplay();
+                            
+                            // 创建电池收集效果
+                            this.createParticles(this.player.x, this.player.y, 12, '#60A5FA');
+                        }
+                        
+                        // 检查成就
+                        this.checkAchievements();
+                        
+                        // 移除道具
+                        this.powerups.splice(i, 1);
+                    }
+                }
+                
+                // 更新粒子
+                this.updateParticles();
+            }
+            
+            // 单独的粒子更新方法
+            updateParticles() {
+                // 限制粒子数量，防止性能问题
+                if (this.particles.length > 1000) {
+                    this.particles.splice(0, this.particles.length - 500);
+                }
+                
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    const particle = this.particles[i];
+                    
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    particle.alpha -= particle.decay;
+                    
+                    if (particle.alpha <= 0) {
+                        this.particles.splice(i, 1);
+                    }
+                }
+            }
+            
+            // 检查是否需要升级关卡 - 修复关卡4后无法继续的核心逻辑
+            checkLevelUp() {
+                // 防止在升级过程中再次触发升级
+                if (this.isLevelingUp) return;
+                
+                // 计算当前应该所处的关卡：每吸收10只蚊子升一级
+                const requiredMosquitoes = this.level * 10;
+                
+                // 调试信息：在控制台显示当前进度
+                console.log(`当前关卡: ${this.level}, 已吸收: ${this.mosquitoesAbsorbed}, 需要: ${requiredMosquitoes}`);
+                
+                // 当吸收的蚊子数量达到当前关卡所需数量时升级
+                if (this.mosquitoesAbsorbed >= requiredMosquitoes) {
+                    this.levelUp();
+                }
+            }
+            
+            // 绘制游戏元素
+            render() {
+                // 清空画布
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // 绘制粒子
+                this.particles.forEach(particle => {
+                    this.ctx.save();
+                    this.ctx.globalAlpha = particle.alpha;
+                    this.ctx.fillStyle = particle.color;
+                    this.ctx.beginPath();
+                    this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.restore();
+                });
+                
+                // 绘制吸收范围（如果激活）
+                if (this.suction.active && !this.isLevelingUp) {
+                    const effectiveRadius = this.suction.powerup ? 
+                        this.suction.radius * 2 : this.suction.radius;
+                    
+                    // 绘制渐变吸收范围
+                    const gradient = this.ctx.createRadialGradient(
+                        this.player.x, this.player.y, 0,
+                        this.player.x, this.player.y, effectiveRadius
+                    );
+                    gradient.addColorStop(0, 'rgba(79, 70, 229, 0.3)');
+                    gradient.addColorStop(0.7, 'rgba(79, 70, 229, 0.1)');
+                    gradient.addColorStop(1, 'rgba(79, 70, 229, 0)');
+                    
+                    this.ctx.save();
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.player.x, this.player.y, effectiveRadius, 0, Math.PI * 2);
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.fill();
+                    
+                    // 绘制吸收范围动画效果
+                    if (this.suction.powerup) {
+                        const pulseRadius = effectiveRadius * (0.9 + Math.sin(Date.now() * 0.005) * 0.1);
+                        this.ctx.strokeStyle = 'rgba(79, 70, 229, 0.6)';
+                        this.ctx.lineWidth = 2;
+                        this.ctx.beginPath();
+                        this.ctx.arc(this.player.x, this.player.y, pulseRadius, 0, Math.PI * 2);
+                        this.ctx.stroke();
+                    }
+                    this.ctx.restore();
+                }
+                
+                // 绘制玩家（吸蚊枪）
+                this.ctx.save();
+                this.ctx.translate(this.player.x, this.player.y);
+                
+                // 无敌状态闪烁效果
+                if (this.player.invincible && Math.floor(Date.now() / 100) % 2 === 0) {
+                    this.ctx.globalAlpha = 0.5;
+                }
+                
+                // 绘制吸蚊枪收集袋（下方）
+                this.ctx.fillStyle = '#6B7280';
+                this.ctx.beginPath();
+                this.ctx.ellipse(0, this.player.height/2 + 10, this.player.width/2 + 5, 20, 0, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // 袋子细节
+                this.ctx.fillStyle = '#4B5563';
+                this.ctx.beginPath();
+                this.ctx.ellipse(0, this.player.height/2 + 10, this.player.width/2 - 5, 15, 0, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // 在收集袋上显示蚊子数量 - 位置已向下调整
+                this.ctx.fillStyle = 'white';
+                this.ctx.font = 'bold 12px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillText(this.mosquitoesAbsorbed, 0, this.player.height/2 + 15);
+                
+                // 连接部分
+                this.ctx.fillStyle = '#374151';
+                this.ctx.beginPath();
+                this.ctx.rect(-this.player.width/4, this.player.height/2 - 10, this.player.width/2, 20);
+                this.ctx.fill();
+                
+                // 绘制吸蚊枪主体
+                this.ctx.fillStyle = '#374151';
+                this.ctx.beginPath();
+                this.ctx.roundRect(-this.player.width/2, -this.player.height/2, this.player.width, this.player.height, 10);
+                this.ctx.fill();
+                
+                // 枪的细节
+                this.ctx.fillStyle = '#1F2937';
+                this.ctx.beginPath();
+                this.ctx.roundRect(-this.player.width/3, -this.player.height/2 + 5, this.player.width/1.5, this.player.height - 10, 5);
+                this.ctx.fill();
+                
+                // 吸入口
+                this.ctx.fillStyle = '#111827';
+                this.ctx.beginPath();
+                this.ctx.arc(0, -this.player.height/2 + 10, this.player.width/6, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // 吸入效果（当激活时）
+                if (this.suction.active && !this.isLevelingUp) {
+                    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                    this.ctx.lineWidth = 2;
+                    const suctionPulse = 1 + Math.sin(Date.now() * 0.01) * 0.3;
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, -this.player.height/2 + 10, this.player.width/6 * suctionPulse, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                }
+                
+                // 枪的按钮
+                this.ctx.fillStyle = '#EF4444';
+                this.ctx.beginPath();
+                this.ctx.arc(this.player.width/4, 0, 5, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // 如果有护盾，绘制护盾
+                if (this.player.hasShield) {
+                    this.ctx.strokeStyle = '#F59E0B';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.setLineDash([3, 3]);
+                    const shieldSize = this.player.width/2 + 15 + Math.sin(Date.now() * 0.01) * 3;
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, shieldSize, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                    this.ctx.setLineDash([]);
+                }
+                
+                this.ctx.restore();
+                
+                // 关卡升级过程中不绘制蚊子和道具
+                if (!this.isLevelingUp) {
+                    // 绘制蚊子
+                    this.mosquitoes.forEach(mosquito => {
+                        this.ctx.save();
+                        this.ctx.translate(mosquito.x, mosquito.y);
+                        this.ctx.rotate(mosquito.rotation);
+                        
+                        // 蚊子身体（深色）
+                        this.ctx.fillStyle = '#222222';
+                        this.ctx.beginPath();
+                        this.ctx.ellipse(0, 0, mosquito.size * 0.6, mosquito.size, 0, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        
+                        // 蚊子头部
+                        this.ctx.fillStyle = '#111111';
+                        this.ctx.beginPath();
+                        this.ctx.arc(0, -mosquito.size * 0.7, mosquito.size * 0.5, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        
+                        // 蚊子眼睛
+                        this.ctx.fillStyle = 'white';
+                        this.ctx.beginPath();
+                        this.ctx.arc(-mosquito.size * 0.2, -mosquito.size * 0.8, mosquito.size * 0.15, 0, Math.PI * 2);
+                        this.ctx.arc(mosquito.size * 0.2, -mosquito.size * 0.8, mosquito.size * 0.15, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        
+                        // 蚊子翅膀（半透明，带动画）
+                        const wingAngle = Math.sin(mosquito.wingPhase) * 0.3;
+                        this.ctx.fillStyle = 'rgba(200, 200, 200, 0.7)';
+                        
+                        // 左翅膀
+                        this.ctx.save();
+                        this.ctx.rotate(-wingAngle);
+                        this.ctx.beginPath();
+                        this.ctx.ellipse(-mosquito.size * 0.8, -mosquito.size * 0.3, 
+                                        mosquito.size * 0.7, mosquito.size * 0.4, 0, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        this.ctx.restore();
+                        
+                        // 右翅膀
+                        this.ctx.save();
+                        this.ctx.rotate(wingAngle);
+                        this.ctx.beginPath();
+                        this.ctx.ellipse(mosquito.size * 0.8, -mosquito.size * 0.3, 
+                                        mosquito.size * 0.7, mosquito.size * 0.4, 0, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        this.ctx.restore();
+                        
+                        // 蚊子腿
+                        this.ctx.strokeStyle = '#222222';
+                        this.ctx.lineWidth = 1;
+                        
+                        // 前腿
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(-mosquito.size * 0.3, -mosquito.size * 0.4);
+                        this.ctx.lineTo(-mosquito.size * 0.6, -mosquito.size * 0.8);
+                        this.ctx.stroke();
+                        
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(mosquito.size * 0.3, -mosquito.size * 0.4);
+                        this.ctx.lineTo(mosquito.size * 0.6, -mosquito.size * 0.8);
+                        this.ctx.stroke();
+                        
+                        // 中腿
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(-mosquito.size * 0.2, 0);
+                        this.ctx.lineTo(-mosquito.size * 0.7, mosquito.size * 0.3);
+                        this.ctx.stroke();
+                        
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(mosquito.size * 0.2, 0);
+                        this.ctx.lineTo(mosquito.size * 0.7, mosquito.size * 0.3);
+                        this.ctx.stroke();
+                        
+                        // 后腿
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(-mosquito.size * 0.2, mosquito.size * 0.4);
+                        this.ctx.lineTo(-mosquito.size * 0.6, mosquito.size * 0.9);
+                        this.ctx.stroke();
+                        
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(mosquito.size * 0.2, mosquito.size * 0.4);
+                        this.ctx.lineTo(mosquito.size * 0.6, mosquito.size * 0.9);
+                        this.ctx.stroke();
+                        
+                        // 蚊子嘴
+                        this.ctx.strokeStyle = '#111111';
+                        this.ctx.lineWidth = 1;
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(0, -mosquito.size * 0.9);
+                        this.ctx.lineTo(0, -mosquito.size * 1.3);
+                        this.ctx.stroke();
+                        
+                        this.ctx.restore();
+                    });
+                    
+                    // 绘制道具
+                    this.powerups.forEach(powerup => {
+                        this.ctx.save();
+                        this.ctx.translate(powerup.x, powerup.y);
+                        
+                        // 道具闪烁效果
+                        const pulse = 0.8 + Math.sin(Date.now() * 0.01) * 0.2;
+                        
+                        // 绘制道具背景
+                        let color;
+                        if (powerup.type === 'suction') {
+                            color = `rgba(79, 70, 229, ${pulse})`;
+                        } else if (powerup.type === 'shield') {
+                            color = `rgba(245, 158, 11, ${pulse})`;
+                        } else { // 电池道具
+                            color = `rgba(96, 165, 250, ${pulse})`;
+                        }
+                        
+                        this.ctx.fillStyle = color;
+                        this.ctx.beginPath();
+                        this.ctx.arc(0, 0, powerup.size, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        
+                        // 绘制道具图标
+                        this.ctx.fillStyle = 'white';
+                        if (powerup.type === 'suction') {
+                            // 绘制磁铁图标
+                            this.ctx.beginPath();
+                            this.ctx.ellipse(0, 0, powerup.size * 0.6, powerup.size * 0.3, 0, 0, Math.PI * 2);
+                            this.ctx.fill();
+                            this.ctx.beginPath();
+                            this.ctx.rect(-powerup.size * 0.2, -powerup.size * 0.4, 
+                                          powerup.size * 0.4, powerup.size * 0.8);
+                            this.ctx.fill();
+                        } else if (powerup.type === 'shield') {
+                            // 绘制护盾图标
+                            this.ctx.beginPath();
+                            this.ctx.arc(0, 0, powerup.size * 0.5, 0, Math.PI * 2);
+                            this.ctx.fill();
+                            this.ctx.fillStyle = powerup.type === 'suction' ? '#4F46E5' : '#F59E0B';
+                            this.ctx.beginPath();
+                            this.ctx.arc(0, 0, powerup.size * 0.3, 0, Math.PI * 2);
+                            this.ctx.fill();
+                        } else { // 电池道具图标
+                            this.ctx.fillStyle = 'white';
+                            this.ctx.beginPath();
+                            this.ctx.rect(-powerup.size * 0.4, -powerup.size * 0.5, 
+                                          powerup.size * 0.8, powerup.size);
+                            this.ctx.fill();
+                            this.ctx.beginPath();
+                            this.ctx.rect(powerup.size * 0.4, -powerup.size * 0.3, 
+                                          powerup.size * 0.2, powerup.size * 0.6);
+                            this.ctx.fill();
+                        }
+                        
+                        this.ctx.restore();
+                    });
+                } else {
+                    // 关卡升级时显示背景效果
+                    this.ctx.save();
+                    this.ctx.fillStyle = 'rgba(245, 158, 11, 0.1)';
+                    const pulseSize = 100 + Math.sin(Date.now() * 0.005) * 20;
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.canvas.width / 2, this.canvas.height / 2, pulseSize, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.restore();
+                }
+            }
+            
+            // 关卡升级 - 优化版本
+            levelUp() {
+                // 防止重复触发升级
+                if (this.isLevelingUp) return;
+                
+                // 设置升级状态
+                this.isLevelingUp = true;
+                
+                this.level++;
+                this.updateLevel();
+                
+                // 显示关卡升级提示
+                this.showLevelUpNotification();
+                
+                // 提高难度 - 更平滑的难度曲线
+                // 从关卡4开始，减缓难度提升速度
+                let spawnRateReduction = 80;
+                let maxMosquitoesIncrease = 1;
+                
+                if (this.level > 4) {
+                    spawnRateReduction = 50; // 关卡4后每次减少50ms
+                    maxMosquitoesIncrease = 1; // 保持每次增加1只
+                }
+                
+                this.spawnRate = Math.max(500, this.spawnRate - spawnRateReduction); // 最小500ms
+                this.maxMosquitoes = Math.min(30, this.maxMosquitoes + maxMosquitoesIncrease); // 最大30只
+                this.player.speed = Math.min(8, this.player.speed + 0.1); // 最大速度8
+                
+                // 关卡升级时补充一点电池
+                this.player.battery = Math.min(this.player.maxBattery, this.player.battery + 1);
+                this.updateBatteryDisplay();
+                
+                // 清除当前屏幕上的蚊子并创建粒子效果
+                if (this.mosquitoes.length > 0) {
+                    this.mosquitoes.forEach(mosquito => {
+                        this.createParticles(mosquito.x, mosquito.y, 5, '#555555');
+                    });
+                    this.mosquitoes = []; // 直接清空数组，更高效
+                }
+                
+                // 清除道具
+                this.powerups = [];
+                
+                // 检查成就
+                this.checkAchievements();
+                
+                // 调试信息：显示关卡升级成功
+                console.log(`成功升级到关卡 ${this.level}`);
+            }
+            
+            // 游戏循环
+            gameLoop(timestamp = 0) {
+                // 计算时间差
+                const deltaTime = timestamp - this.lastTime;
+                this.lastTime = timestamp;
+                
+                // 更新游戏状态
+                this.update(timestamp, deltaTime);
+                
+                // 绘制游戏画面
+                this.render();
+                
+                // 继续循环
+                this.animationId = requestAnimationFrame((t) => this.gameLoop(t));
+            }
+            
+            // 开始游戏
+            startGame() {
+                // 重置游戏状态
+                this.resetGame();
+                
+                // 记录游戏开始时间
+                this.gameStartTime = Date.now();
+                this.lastTime = performance.now();
+                
+                // 更新界面状态
+                this.gameState = 'playing';
+                document.getElementById('start-screen').classList.add('opacity-0', 'pointer-events-none');
+                document.getElementById('game-ui').classList.remove('opacity-0');
+            }
+            
+            // 重置游戏
+            resetGame() {
+                // 清除可能存在的超时
+                if (this.levelUpTimeout) {
+                    clearTimeout(this.levelUpTimeout);
+                }
+                
+                this.player = {
+                    x: this.canvas.width / 2,
+                    y: this.canvas.height / 2,
+                    width: 50,
+                    height: 60,
+                    speed: 5,
+                    lives: 3,
+                    invincible: false,
+                    invincibleTimer: 0,
+                    color: '#374151',
+                    hasShield: false,
+                    // 电池属性 - 初始满电
+                    battery: 4,
+                    maxBattery: 4
+                };
+                
+                this.suction = {
+                    active: false,
+                    radius: 60,
+                    powerup: false,
+                    powerupTimer: 0,
+                    maxPowerupTime: 10000
+                };
+                
+                // 重置蚊子计数
+                this.mosquitoesSinceLastBatteryUse = 0;
+                
+                this.mosquitoes = [];
+                this.powerups = [];
+                this.particles = [];
+                
+                this.score = 0;
+                this.level = 1;
+                this.lastLevel = 1;
+                this.mosquitoesAbsorbed = 0;
+                this.mosquitoesEscaped = 0;
+                this.isLevelingUp = false;
+                this.batteriesCollected = 0; // 重置电池收集数量
+                
+                this.spawnRate = 1500;
+                this.lastSpawnTime = 0;
+                this.maxMosquitoes = 8;
+                
+                // 重置UI
+                this.updateScore();
+                this.updateLives();
+                this.updateLevel();
+                this.updateMosquitoCount();
+                this.updateBatteryDisplay();
+                document.getElementById('suction-timer').textContent = '0s';
+                document.getElementById('powerup-suction').classList.add('opacity-50');
+                document.getElementById('powerup-shield').classList.add('opacity-50');
+                document.getElementById('level-up-notification').style.opacity = '0';
+                document.getElementById('level-up-notification').style.pointerEvents = 'none';
+            }
+            
+            // 暂停游戏
+            pauseGame() {
+                if (this.gameState !== 'playing') return;
+                
+                this.gameState = 'paused';
+                document.getElementById('pause-screen').classList.remove('opacity-0', 'pointer-events-none');
+            }
+            
+            // 恢复游戏
+            resumeGame() {
+                if (this.gameState !== 'paused') return;
+                
+                this.gameState = 'playing';
+                document.getElementById('pause-screen').classList.add('opacity-0', 'pointer-events-none');
+                this.lastTime = performance.now(); // 重置时间，避免暂停期间的时间累积
+            }
+            
+            // 重新开始游戏
+            restartGame() {
+                // 隐藏所有弹窗
+                document.getElementById('pause-screen').classList.add('opacity-0', 'pointer-events-none');
+                document.getElementById('game-over-screen').classList.add('opacity-0', 'pointer-events-none');
+                
+                // 开始新游戏
+                this.startGame();
+            }
+            
+            // 退出游戏，返回主菜单
+            quitGame() {
+                this.gameState = 'start';
+                document.getElementById('pause-screen').classList.add('opacity-0', 'pointer-events-none');
+                document.getElementById('start-screen').classList.remove('opacity-0', 'pointer-events-none');
+                document.getElementById('game-ui').classList.add('opacity-0');
+            }
+            
+            // 返回主菜单
+            backToMenu() {
+                this.gameState = 'start';
+                document.getElementById('game-over-screen').classList.add('opacity-0', 'pointer-events-none');
+                document.getElementById('start-screen').classList.remove('opacity-0', 'pointer-events-none');
+                document.getElementById('game-ui').classList.add('opacity-0');
+            }
+            
+            // 游戏结束
+            gameOver() {
+                this.gameState = 'gameOver';
+                document.getElementById('game-over-screen').classList.remove('opacity-0', 'pointer-events-none');
+            }
+            
+            // 显示游戏说明
+            showInstructions() {
+                document.getElementById('instructions-screen').classList.remove('opacity-0', 'pointer-events-none');
+            }
+            
+            // 隐藏游戏说明
+            hideInstructions() {
+                document.getElementById('instructions-screen').classList.add('opacity-0', 'pointer-events-none');
+            }
+            
+            // 显示成就界面
+            showAchievements() {
+                this.renderAchievementsList();
+                document.getElementById('achievements-screen').classList.remove('opacity-0', 'pointer-events-none');
+            }
+            
+            // 隐藏成就界面
+            hideAchievements() {
+                document.getElementById('achievements-screen').classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+        
+        // 当页面加载完成后初始化游戏
+        window.addEventListener('load', () => {
+            const game = new MosquitoGame();
+        });
+    </script>
 </body>
 </html>
