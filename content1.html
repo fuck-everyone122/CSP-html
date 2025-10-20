@@ -1,10 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Introduce</title>
+    <title>introduce</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#BB1919',
+                        secondary: '#000000',
+                        neutral: '#F4F4F4',
+                        'neutral-dark': '#333333',
+                    },
+                    fontFamily: {
+                        roboto: ['Roboto', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            }
+            .hover-lift {
+                transition: transform 0.2s ease-in-out;
+            }
+            .hover-lift:hover {
+                transform: translateY(-2px);
+            }
+            .news-card-shadow {
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                transition: box-shadow 0.3s ease;
+            }
+            .news-card-shadow:hover {
+                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            }
+        }
+    </style>
 </head>
+<body class="font-roboto bg-white text-neutral-dark">
+    <!-- Header with Navigation -->
+    <header class="sticky top-0 z-50 bg-white shadow-md transition-all duration-300">
+        <!-- Top Navigation Bar -->
+        <div class="bg-primary text-white">
+            <div class="container mx-auto px-4">
+                <div class="flex justify-between items-center py-2">
+                    <div class="flex items-center space-x-4">
+                        <button class="md:hidden text-xl focus:outline-none">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <a href="main.html" class="text-lg font-bold">Main page</a>
+                        <h1 class="text-2xl font-black tracking-tighter"><span class="hidden sm:inline"></span></h1> 
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
 <body>
     
 </body>
