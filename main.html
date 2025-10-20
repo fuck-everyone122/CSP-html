@@ -67,35 +67,10 @@
                         </button>
                         <h1 class="text-2xl font-black tracking-tighter"><span class="hidden sm:inline"></span></h1> 
                     </div>
-                    
-                    <div class="hidden md:flex items-center space-x-6">
-                        <a href="#" class="hover:underline transition-colors">1.1</a>
-                    </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Secondary Navigation -->
-        <div class="bg-white border-b border-gray-200">
-            <div class="container mx-auto px-4">
-                <nav class="flex overflow-x-auto py-2 space-x-6 text-sm whitespace-nowrap scrollbar-hide">
-                    <a href="#" class="font-bold text-primary hover:underline transition-colors">2.1</a>
-                    <a href="#" class="hover:underline transition-colors">2.2</a>
-                    <a href="#" class="hover:underline transition-colors">2.3</a>
-                    <a href="#" class="hover:underline transition-colors">2.4</a>
-                </nav>
-            </div>
-        </div>
     </header>
-
-    <!-- Breaking News Bar -->
-    <div class="bg-red-600 text-white py-1.5">
-        <div class="container mx-auto px-4">
-            <p class="text-sm font-bold flex items-center">
-                <span class="inline-block mr-2">1</span>
-            </p>
-        </div>
-    </div>
 
     <main class="container mx-auto px-4 py-6">
       
@@ -130,15 +105,17 @@
                     
                     <!-- Secondary News 2 -->
                     <div class="relative overflow-hidden rounded-lg group hover-lift">
-                        <img src="" alt="" class="w-full h-[240px] object-cover transition-transform duration-700 group-hover:scale-105" href = ./game.html>
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-                        <div class="absolute bottom-0 left-0 p-4 text-white">
-                            <span class="inline-block px-2 py-1 bg-green-600 text-xs font-bold mb-2"></span>
-                            <h3 class="text-xl font-bold mb-1 text-shadow"></h3>
-                            <div class="flex items-center text-sm">
-                                <a href = ./game.html>Game Page</a>
+                        <a href = ./game.html class ="block">
+                            <img src="" alt="" class="w-full h-[240px] object-cover transition-transform duration-700 group-hover:scale-105" href = ./game.html>
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+                            <div class="absolute bottom-0 left-0 p-4 text-white">
+                                <span class="inline-block px-2 py-1 bg-green-600 text-xs font-bold mb-2"></span>
+                                <h3 class="text-xl font-bold mb-1 text-shadow"></h3>
+                                <div class="flex items-center text-sm">
+                                    <span>Game Page</span>
+                                </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -203,39 +180,14 @@
         <div class="container mx-auto px-4 py-10">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
                 <div>
-                    <h3 class="text-xl font-black mb-4">NEWS HUB</h3>
-                    <p class="text-gray-400 text-sm">Trusted news source providing comprehensive coverage of world events, politics, business, and more.</p>
-                </div>
-                
-                <div>
                     <h4 class="font-bold mb-4">Connect with us</h4>
-                    <div class="flex space-x-4 mb-4">
-                        <a href="#" class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center hover:bg-primary transition-colors">
-                            <i class="fa fa-facebook"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center hover:bg-primary transition-colors">
-                            <i class="fa fa-twitter"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center hover:bg-primary transition-colors">
-                            <i class="fa fa-instagram"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center hover:bg-primary transition-colors">
-                            <i class="fa fa-youtube-play"></i>
-                        </a>
                 </div>
-            </div>
             
             <div class="border-t border-gray-700 pt-6">
                 <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
-                    <a href="#" class="hover:text-white transition-colors">About Us</a>
-                    <a href="#" class="hover:text-white transition-colors">Contact</a>
-                    <a href="#" class="hover:text-white transition-colors">Terms of Service</a>
-                    <a href="#" class="hover:text-white transition-colors">Privacy Policy</a>
-                    <a href="#" class="hover:text-white transition-colors">Cookies</a>
-                    <a href="#" class="hover:text-white transition-colors">Accessibility</a>
-                    <a href="#" class="hover:text-white transition-colors">Advertise with us</a>
+                    <a href="#" class="hover:text-white transition-colors">+86 ***************</a>
+                    <a href="#" class="hover:text-white transition-colors">Wechat: </a>
                 </div>
-                <p class="text-center text-gray-500 text-xs mt-6">© 2023 News Hub. All rights reserved.</p>
             </div>
         </div>
     </footer>
@@ -247,6 +199,8 @@
             // This would normally toggle a mobile menu
             alert('Mobile menu would open here');
         });
+
+        
         
         // Header scroll effect
         window.addEventListener('scroll', function() {
