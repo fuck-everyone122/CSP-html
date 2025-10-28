@@ -216,5 +216,36 @@
             alert('Video would play here');
         });
     </script>
+
+    <script>
+        // 检测是否为触摸设备
+        function detectDeviceType() {
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+
+            if (/android/i.test(userAgent)) {
+                return "Android";
+            }
+
+
+            if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+                return "iOS";
+            }
+
+            if (/windows phone/i.test(userAgent)) {
+                return "Windows Phone";
+            }
+            return "Desktop";
+        }
+
+        const deviceType = detectDeviceType();
+
+        console.log("Device Type: ", deviceType);
+
+        if (detectDeviceType() != "Desktop") {
+            document.getElementById('warningBar').style.display = 'block';
+        }
+    </script>
+
 </body>
 </html>
