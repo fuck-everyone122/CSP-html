@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Our Team</title>
-    <!-- 引入外部资源（与主页面保持一致） -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     
-    <!-- Tailwind 配置（复用主页面配置） -->
+    <!-- Tailwind -->
     <script>
         tailwind.config = {
             theme: {
@@ -43,7 +42,6 @@
     </style>
 </head>
 <body class="font-roboto bg-white text-neutral-dark">
-    <!-- 复用主页面的头部导航 -->
     <header class="sticky top-0 z-50 bg-white shadow-md transition-all duration-300">
         <div class="bg-primary text-white">
             <div class="container mx-auto px-4">
@@ -52,7 +50,7 @@
                         <button class="md:hidden text-xl focus:outline-none">
                             <i class="fa fa-bars"></i>
                         </button>
-                        <a href = "index.html"> Home page</a> 
+                        <a href = "index.html">Home page</a> 
                     </div>
                 </div>
             </div>
@@ -69,12 +67,11 @@
         <!-- 新增：团队卡片容器 -->
         <section class="mb-12">
             <div id="team-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- 团队卡片将通过JavaScript动态插入这里 -->
+
             </div>
         </section>
     </main>
 
-    <!-- 复用主页面的页脚 -->
     <footer class="bg-neutral-dark text-white">
         <div class="container mx-auto px-4 py-10">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
@@ -95,29 +92,23 @@
     <script>
         const teamMembers = [
             {
-                name: "Justin & Peter",
-                role: "",
-                bio: "",
-                avatar: "./image/team/Project group/2bbb19b4f8fa27416105bbd40c31b341.jpg" // 替换为实际图片路径
-            },
-            {
-                name: "",
-                role: "",
-                bio: "",
+                name: "STEVEN HUANG & DAVID JIANG",
+                role: "COMPUTER SCIENCE GROUP",
+                bio: "DESIGNED AND BUILT THE PRODUCT'S WEBSITE AND DIGITAL DISPLAY.",
                 avatar: ""
             },
             {
-                name: "",
-                role: "",
-                bio: "",
-                avatar: ""
+                name: "SIMON HE, JUSTIN LI, PETER SUN & KYRIE GUAN",
+                role: "PHYSICS & DESIGN DROUP",
+                bio: "RESPONSIBLE FOR ENGINEERING DESIGN, MATERIAL SOURCING, AND PROTOTYPE TESTING.",
+                avatar: "./image/team/Project group/2bbb19b4f8fa27416105bbd40c31b341.jpg"
             },
             {
-                name: "",
-                role: "",
-                bio: "",
+                name: "CHRISTOPHER SUN, SIMON HE & KYRIE GUAN",
+                role: "MARKETING GROUP",
+                bio: "HANDLED PRODUCT PROMOTION, POSTER AND VIDEO PRODUCTION.",
                 avatar: ""
-            }
+            },
         ];
 
         // 获取容器元素
@@ -135,12 +126,7 @@
                     <p class="text-primary font-medium mb-3">${member.role}</p>
                     <p class="text-gray-600">${member.bio}</p>
                     <div class="flex space-x-3 mt-4">
-                        <a href="#" class="text-neutral-dark hover:text-primary transition-colors">
-                            <i class="fa fa-github text-xl"></i>
-                        </a>
-                        <a href="#" class="text-neutral-dark hover:text-primary transition-colors">
-                            <i class="fa fa-linkedin text-xl"></i>
-                        </a>
+
                     </div>
                 </div>
             `;
