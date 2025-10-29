@@ -355,10 +355,7 @@
         console.log("Device Type: ", deviceType);
 
         if (detectDeviceType() != "Desktop") {
-            // 原代码中没有warningBar元素，这里保持原样
-            if(document.getElementById('warningBar')) {
-                document.getElementById('warningBar').style.display = 'block';
-            }
+            document.getElementById('warningBar').style.display = 'block';
         }
     </script>
 
