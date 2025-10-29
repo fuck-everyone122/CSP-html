@@ -886,18 +886,28 @@
             completeLevelUp() {
                 if (!this.isLevelingUp) return;
                 
+                // 清除超时计时器
+                clearTimeout(this.levelUpTimeout);
+                
                 const notification = document.getElementById('level-up-notification');
                 notification.style.opacity = '0';
                 notification.style.pointerEvents = 'none';
                 
                 // 重置升级状态
                 this.isLevelingUp = false;
+                this.gameState = 'playing'; // 恢复游戏状态
                 
                 // 触发新关卡的蚊子生成
                 this.lastSpawnTime = performance.now() - this.spawnRate + 500; // 500ms后生成新蚊子
                 
                 // 确保关卡计数器正确更新
                 this.updateLevel();
+                
+                // 确保游戏循环继续
+                if (!this.animationId) {
+                    this.lastTime = performance.now();
+                    this.gameLoop();
+                }
             }
             
             // 生成蚊子
@@ -1309,15 +1319,66 @@
                 if (this.isLevelingUp) return;
                 
                 // 计算当前应该所处的关卡：每吸收10只蚊子升一级
-                const requiredMosquitoes = this.level * 10;
+                const targetLevel = Math.floor(this.mosquitoesAbsorbed / 10) + 1;
                 
                 // 调试信息：在控制台显示当前进度
-                console.log(`当前关卡: ${this.level}, 已吸收: ${this.mosquitoesAbsorbed}, 需要: ${requiredMosquitoes}`);
+                console.log(`当前关卡: ${this.level}, 已吸收: ${this.mosquitoesAbsorbed}, 需要: ${(this.level) * 10}`);
                 
-                // 当吸收的蚊子数量达到当前关卡所需数量时升级
-                if (this.mosquitoesAbsorbed >= requiredMosquitoes) {
+                // 当目标关卡大于当前关卡时升级
+                if (targetLevel > this.level) {
                     this.levelUp();
                 }
+            }
+            
+            // 关卡升级 - 优化版本
+            levelUp() {
+                // 防止重复触发升级
+                if (this.isLevelingUp) return;
+                
+                // 设置升级状态
+                this.isLevelingUp = true;
+                this.gameState = 'levelingUp'; // 设置为升级状态
+                
+                this.level++;
+                this.updateLevel();
+                
+                // 显示关卡升级提示
+                this.showLevelUpNotification();
+                
+                // 提高难度 - 更平滑的难度曲线
+                // 从关卡4开始，减缓难度提升速度
+                let spawnRateReduction = 80;
+                let maxMosquitoesIncrease = 1;
+                
+                if (this.level > 4) {
+                    spawnRateReduction = 50; // 关卡4后每次减少50ms
+                    maxMosquitoesIncrease = 1; // 保持每次增加1只
+                }
+                
+                this.spawnRate = Math.max(500, this.spawnRate - spawnRateReduction); // 最小500ms
+                this.maxMosquitoes = Math.min(30, this.maxMosquitoes + maxMosquitoesIncrease); // 最大30只
+                this.player.speed = Math.min(8, this.player.speed + 0.1); // 最大速度8
+                
+                // 关卡升级时补充一点电池
+                this.player.battery = Math.min(this.player.maxBattery, this.player.battery + 1);
+                this.updateBatteryDisplay();
+                
+                // 清除当前屏幕上的蚊子并创建粒子效果
+                if (this.mosquitoes.length > 0) {
+                    this.mosquitoes.forEach(mosquito => {
+                        this.createParticles(mosquito.x, mosquito.y, 5, '#555555');
+                    });
+                    this.mosquitoes = []; // 直接清空数组，更高效
+                }
+                
+                // 清除道具
+                this.powerups = [];
+                
+                // 检查成就
+                this.checkAchievements();
+                
+                // 调试信息：显示关卡升级成功
+                console.log(`成功升级到关卡 ${this.level}`);
             }
             
             // 绘制游戏元素
@@ -1616,70 +1677,47 @@
                 }
             }
             
-            // 关卡升级 - 优化版本
-            levelUp() {
-                // 防止重复触发升级
-                if (this.isLevelingUp) return;
-                
-                // 设置升级状态
-                this.isLevelingUp = true;
-                
-                this.level++;
-                this.updateLevel();
-                
-                // 显示关卡升级提示
-                this.showLevelUpNotification();
-                
-                // 提高难度 - 更平滑的难度曲线
-                // 从关卡4开始，减缓难度提升速度
-                let spawnRateReduction = 80;
-                let maxMosquitoesIncrease = 1;
-                
-                if (this.level > 4) {
-                    spawnRateReduction = 50; // 关卡4后每次减少50ms
-                    maxMosquitoesIncrease = 1; // 保持每次增加1只
-                }
-                
-                this.spawnRate = Math.max(500, this.spawnRate - spawnRateReduction); // 最小500ms
-                this.maxMosquitoes = Math.min(30, this.maxMosquitoes + maxMosquitoesIncrease); // 最大30只
-                this.player.speed = Math.min(8, this.player.speed + 0.1); // 最大速度8
-                
-                // 关卡升级时补充一点电池
-                this.player.battery = Math.min(this.player.maxBattery, this.player.battery + 1);
-                this.updateBatteryDisplay();
-                
-                // 清除当前屏幕上的蚊子并创建粒子效果
-                if (this.mosquitoes.length > 0) {
-                    this.mosquitoes.forEach(mosquito => {
-                        this.createParticles(mosquito.x, mosquito.y, 5, '#555555');
-                    });
-                    this.mosquitoes = []; // 直接清空数组，更高效
-                }
-                
-                // 清除道具
-                this.powerups = [];
-                
-                // 检查成就
-                this.checkAchievements();
-                
-                // 调试信息：显示关卡升级成功
-                console.log(`成功升级到关卡 ${this.level}`);
-            }
-            
             // 游戏循环
             gameLoop(timestamp = 0) {
                 // 计算时间差
                 const deltaTime = timestamp - this.lastTime;
                 this.lastTime = timestamp;
                 
-                // 更新游戏状态
-                this.update(timestamp, deltaTime);
+                // 根据游戏状态执行不同逻辑
+                switch(this.gameState) {
+                    case 'start':
+                        // 开始界面不需要更新
+                        this.render();
+                        break;
+                        
+                    case 'playing':
+                        // 游戏逻辑更新
+                        this.update(timestamp, deltaTime);
+                        this.render();
+                        break;
+                        
+                    case 'paused':
+                        // 暂停状态只渲染不更新
+                        this.render();
+                        break;
+                        
+                    case 'levelingUp':
+                        // 升级状态只渲染不更新游戏逻辑
+                        this.render();
+                        break;
+                        
+                    case 'gameOver':
+                        // 游戏结束状态只渲染最终画面
+                        this.render();
+                        break;
+                }
                 
-                // 绘制游戏画面
-                this.render();
-                
-                // 继续循环
-                this.animationId = requestAnimationFrame((t) => this.gameLoop(t));
+                // 继续游戏循环（除了游戏结束状态）
+                if (this.gameState !== 'gameOver') {
+                    this.animationId = requestAnimationFrame((t) => this.gameLoop(t));
+                } else {
+                    this.animationId = null;
+                }
             }
             
             // 开始游戏
