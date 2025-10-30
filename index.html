@@ -183,19 +183,17 @@
                 <!-- Video Feature -->
                 <div class="bg-neutral rounded-lg overflow-hidden news-card-shadow">
                     <div class="relative">
-                        <img src="" alt="" class="w-full h-64 object-cover">
+                        <video src="./video/debf8e67c700f2e5114099ac28e5f09f.mp4" alt="" class="w-full h-64 object-cover">
                         <div class="absolute inset-0 flex items-center justify-center">
                             <button class="w-16 h-16 bg-primary/90 rounded-full flex items-center justify-center text-white transition-transform hover:scale-110 focus:outline-none">
                                 <i class="fa fa-play text-xl ml-1"></i>
                             </button>
                         </div>
                         <div class="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
-                            00:00
+                            01:18
                         </div>
                     </div>
                     <div class="p-5">
-                        <h3 class="text-xl font-bold mb-2"></h3>
-                        <p class="text-gray-600 mb-4"></p>
                         <div class="flex items-center text-sm text-gray-500">
                             <span>VIDEO</span>
                         </div>
@@ -307,6 +305,24 @@
 
             // 启动轮播
             startCarousel();
+
+            const video = document.querySelector('video');
+            const playButton = document.getElementById('playButton');
+            
+            playButton.addEventListener('click', function() {
+                if (video.paused) {
+                    video.play();
+                    playButton.innerHTML = '<i class="fa fa-pause text-xl"></i>';
+                } else {
+                    video.pause();
+                    playButton.innerHTML = '<i class="fa fa-play text-xl ml-1"></i>';
+                }
+            });
+            
+            // 视频结束时恢复播放按钮状态
+            video.addEventListener('ended', function() {
+                playButton.innerHTML = '<i class="fa fa-play text-xl ml-1"></i>';
+            });
         });
         
         // Header scroll effect
